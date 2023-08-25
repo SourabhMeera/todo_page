@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Productivity Increase App</title>
+</head>
+<body>
+  <h1>Productivity Increase App</h1>
+  <form id="todo-form">
+    <label for="user-name">Your Name:</label>
+    <input type="text" id="user-name" required><br>
+    <label for="todo-name">TODO Name:</label>
+    <input type="text" id="todo-name" required><br>
+    <label for="todo-description">Description:</label>
+    <input type="text" id="todo-description" required><br>
+    <button type="button" id="add-item">Add Item</button>
+  </form>
+  
+  <h2>TODO List</h2>
+  <ul id="todo-list"></ul>
+  
+  <h2>WISHLIST</h2>
+  <ul id="wishlist"></ul>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+  <script>
+    const todoList = document.getElementById("todo-list");
+    const wishlist = document.getElementById("wishlist");
+    const addButton = document.getElementById("add-item");
+    
+    addButton.addEventListener("click", addItem);
+
+    function addItem() {
+      const userName = document.getElementById("user-name").value;
+      const todoName = document.getElementById("todo-name").value;
+      const todoDescription = document.getElementById("todo-description").value;
+
+      const todoItem = {
+        userName,
+        todoName,
+        todoDescription
+      };
+
+      console.log("Todo Item:", todoItem);
+      
+      // Call a function to show the new item on the TODO list
+      showTodoItem(todoItem);
+      saveTodoItem(todoItem); // Save the item to the API
+    }
+
+    function showTodoItem(item) {
+      const listItem = document.createElement("li");
+      listItem.innerHTML = `
+        User: ${item.userName}<br>
+        TODO: ${item.todoName} - ${item.todoDescription}
+        <button class="tick-button">&#10003;</button>
+        <button class="cross-button">&#10005;</button>
+      `;
+
+      const tickButton = listItem.querySelector(".tick-button");
+      const crossButton = listItem.querySelector(".cross-button");
+
+      tickButton.addEventListener("click", () => addToWishlist(item));
+      crossButton.addEventListener("click", () => deleteTodoItem(item, listItem));
+
+      todoList.appendChild(listItem);
+    }
+
+    function addToWishlist(item) {
+      wishlist.appendChild(createWishlistItem(item));
+    }
+
+    function createWishlistItem(item) {
+      const wishlistItem = document.createElement("li");
+      wishlistItem.textContent = `${item.userName} - ${item.todoName} - ${item.todoDescription}`;
+      return wishlistItem;
+    }
+
+    function deleteTodoItem(item, itemElement) {
+      axios.delete(`https://crudcrud.com/api/eb38db0b62584f1081e7f6193cb6d600/userdata/${item._id}`)
+        .then(() => {
+          itemElement.remove();
+        })
+        .catch(error => {
+          console.error("Error deleting TODO item:", error);
+        });
+    }
+
+    function saveTodoItem(item) {
+      axios.post("https://crudcrud.com/api/eb38db0b62584f1081e7f6193cb6d600/userdata", item)
+        .then(response => {
+          console.log("Item saved:", response.data);
+        })
+        .catch(error => {
+          console.error("Error saving TODO item:", error);
+        });
+    }
+    
+    // Load existing TODO items from the API
+    axios.get("https://crudcrud.com/api/eb38db0b62584f1081e7f6193cb6d600/userdata")
+      .then(response => {
+        response.data.forEach(item => {
+          showTodoItem(item);
+        });
+      })
+      .catch(error => {
+        console.error("Error fetching TODO items:", error);
+      });
+  </script>
+</body>
+</html>
